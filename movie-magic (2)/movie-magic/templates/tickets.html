@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    {% if confirmed %}Booking Confirmed{% else %}Book Tickets — {{ movie.title }}{% endif %}
+    — Movie Magic
+  </title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* ── Theatre Selector ── */
+    .step-label { font-size:0.85rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary); font-family:var(--font-body); margin-bottom:14px; display:block; }
+    .step-block { margin-bottom:28px; }
+
+    .theatre-cards { display:flex; gap:10px; flex-wrap:wrap; }
+
+    .theatre-card {
+      display:flex; flex-direction:column; gap:4px;
+      padding:12px 16px;
+      border-radius:var(--radius); border:1.5px solid rgba(255,255,255,0.08);
+      background:var(--bg-elevated); cursor:pointer;
+      transition:all var(--transition); min-width:160px; position:relative;
+    }
+    .theatre-card:hover { border-color:rgba(232,196,122,0.4); background:rgba(232,196,122,0.04); }
+    .theatre-card.active { border-color:var(--gold); background:rgba(232,196,122,0.1); box-shadow:0 0 16px rgba(232,196,122,0.1); }
+    .pvr-card.active    { border-color:#e50914 !important; background:rgba(229,9,20,0.08) !important; }
+    .inox-card.active   { border-color:#0077cc !important; background:rgba(0,119,204,0.08) !important; }
+    .cpolis-card.active { border-color:#e8871e !important; background:rgba(232,135,30,0.08) !important; }
+
+    .brand-badge { display:inline-block; font-size:0.62rem; font-weight:800; letter-spacing:0.1em; padding:2px 8px; border-radius:4px; text-transform:uppercase; width:fit-content; }
+    .pvr-badge    { background:#e50914; color:#fff; }
+    .inox-badge   { background:#0055a5; color:#fff; }
+    .cpolis-badge { background:#e8871e; color:#fff; }
+
+    .t-name { font-size:0.88rem; font-weight:700; color:var(--text-primary); margin-top:2px; }
+    .t-loc  { font-size:0.73rem; color:var(--text-muted); }
+    .t-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:5px; }
+    .t-tag  { font-size:0.63rem; padding:2px 7px; border-radius:4px; background:rgba(255,255,255,0.06); color:var(--text-muted); }
+
+    .t-check { position:absolute; top:8px; right:8px; width:18px; height:18px; border-radius:50%; background:var(--gold); color:var(--bg-deep); font-size:10px; display:none; align-items:center; justify-content:center; font-weight:900; }
+    .theatre-card.active .t-check { display:flex; }
+    .pvr-card.active .t-check    { background:#e50914; color:#fff; }
+    .inox-card.active .t-check   { background:#0077cc; color:#fff; }
+    .cpolis-card.active .t-check { background:#e8871e; color:#fff; }
+
+    /* ── Food Menu ── */
+    .food-section { margin-top:32px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.06); }
+
+    .food-toggle-bar {
+      display:flex; align-items:center; gap:10px; cursor:pointer;
+      padding:14px 18px; border-radius:var(--radius);
+      background:var(--bg-elevated); border:1px solid rgba(255,255,255,0.07);
+      transition:border-color var(--transition);
+    }
+    .food-toggle-bar:hover { border-color:rgba(232,196,122,0.25); }
+    .food-toggle-title { font-size:0.95rem; font-weight:700; color:var(--text-primary); }
+    .food-toggle-sub   { font-size:0.8rem; color:var(--text-muted); margin-left:4px; }
+    .food-toggle-arrow { margin-left:auto; color:var(--text-muted); transition:transform 0.3s; font-size:0.8rem; }
+    .food-toggle-bar.open .food-toggle-arrow { transform:rotate(180deg); }
+
+    .food-panel { margin-top:14px; }
+
+    .food-cat-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+    .food-tab { padding:6px 16px; border-radius:100px; font-size:0.82rem; font-weight:600; border:1px solid rgba(255,255,255,0.07); background:var(--bg-elevated); color:var(--text-muted); cursor:pointer; transition:all var(--transition); }
+    .food-tab:hover  { color:var(--gold); border-color:rgba(232,196,122,0.3); }
+    .food-tab.active { background:rgba(232,196,122,0.12); color:var(--gold); border-color:var(--gold-dim); }
+
+    .food-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:10px; }
+
+    .food-item {
+      display:flex; align-items:center; gap:10px; padding:12px 14px;
+      background:var(--bg-elevated); border:1px solid rgba(255,255,255,0.07);
+      border-radius:var(--radius); transition:border-color var(--transition);
+    }
+    .food-item:hover { border-color:rgba(232,196,122,0.2); }
+    .food-emo  { font-size:1.5rem; flex-shrink:0; }
+    .food-info { flex:1; min-width:0; }
+    .food-nm   { font-size:0.84rem; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .food-sz   { font-size:0.71rem; color:var(--text-muted); }
+    .food-pr   { font-size:0.88rem; font-weight:700; color:var(--gold); margin-top:1px; }
+
+    .qty-ctrl  { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+    .qty-btn   { width:26px; height:26px; border-radius:6px; border:1px solid rgba(255,255,255,0.12); background:var(--bg-card); color:var(--text-primary); font-size:1rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all var(--transition); }
+    .qty-btn:hover { border-color:var(--gold-dim); color:var(--gold); }
+    .qty-num   { width:22px; text-align:center; font-size:0.9rem; font-weight:700; }
+
+    /* ── Panel sections ── */
+    .psec { margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.05); }
+    .psec:last-child { border-bottom:none; }
+    .psec-label { font-size:0.72rem; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; }
+    .food-sum-row { display:flex; justify-content:space-between; font-size:0.82rem; padding:3px 0; color:var(--text-secondary); }
+    .food-sum-row .fs-val { color:var(--gold); font-weight:600; }
+
+    /* ── Confirmation extras ── */
+    .food-conf-row { display:flex; justify-content:space-between; font-size:0.85rem; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text-secondary); }
+    .food-conf-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <a href="{{ url_for('home') }}" class="nav-logo"><span>🎬</span> Movie Magic</a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('home') }}">Now Showing</a></li>
+        <li><a href="{{ url_for('about') }}">About</a></li>
+        <li><a href="{{ url_for('contact') }}">Contact</a></li>
+      </ul>
+      <a href="{{ url_for('logout') }}" class="nav-btn btn-outline-gold">Log Out</a>
+    </div>
+  </nav>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container flash-container">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+
+  <!-- ════════════════════════════
+       CONFIRMATION PAGE
+       ════════════════════════════ -->
+  {% if confirmed and booking %}
+  <div class="confirmation-page">
+    <div class="ticket-card" style="max-width:560px">
+
+      <div class="ticket-header">
+        <div class="confirmation-icon">🎉</div>
+        <h2 style="color:var(--gold);margin-bottom:8px">Booking Confirmed!</h2>
+        <p style="color:var(--text-secondary);font-size:0.9rem">
+          Enjoy your movie, <strong style="color:var(--text-primary)">{{ booking.user_name }}</strong>!
+        </p>
+      </div>
+
+      <div class="ticket-perforated">
+        <div class="perf-circle"></div><div class="perf-line"></div><div class="perf-circle"></div>
+      </div>
+
+      <div class="ticket-body">
+
+        <div class="ticket-row">
+          <span class="t-label">🏛️ Theatre</span>
+          <div style="text-align:right">
+            <div class="t-value">{{ booking.theatre_name }}</div>
+            <div style="font-size:0.76rem;color:var(--text-muted)">{{ booking.theatre_loc }}</div>
+          </div>
+        </div>
+
+        <div class="ticket-row">
+          <span class="t-label">🎬 Film</span>
+          <span class="t-value">{{ booking.movie_emoji }} {{ booking.movie_title }}</span>
+        </div>
+
+        <div class="ticket-row">
+          <span class="t-label">🕐 Showtime</span>
+          <span class="t-value">{{ booking.showtime }}</span>
+        </div>
+
+        <div class="ticket-row">
+          <span class="t-label">🪑 Seats</span>
+          <span class="t-value">{{ booking.seats | join(", ") }}</span>
+        </div>
+
+        <div class="ticket-row">
+          <span class="t-label">🎟️ Tickets</span>
+          <span class="t-value">{{ booking.num_tickets }} × ₹{{ booking.price_each }} = ₹{{ booking.ticket_total }}</span>
+        </div>
+
+        {% if booking.food_detail %}
+        <div style="padding:14px 0;border-top:1px dashed rgba(255,255,255,0.08);border-bottom:1px dashed rgba(255,255,255,0.08);margin:6px 0">
+          <div style="font-size:0.78rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">🍿 Pre-booked Food & Drinks</div>
+          {% for item in booking.food_detail %}
+          <div class="food-conf-row">
+            <span>{{ item.emoji }} {{ item.name }} <span style="color:var(--text-muted)">({{ item.size }}) × {{ item.qty }}</span></span>
+            <span style="color:var(--gold);font-weight:600">₹{{ item.subtotal }}</span>
+          </div>
+          {% endfor %}
+          <div style="display:flex;justify-content:space-between;padding-top:10px;font-weight:600;font-size:0.88rem;">
+            <span>Food Subtotal</span><span style="color:var(--gold)">₹{{ booking.food_total }}</span>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="ticket-row" style="padding-top:14px;margin-top:4px">
+          <span class="t-label" style="font-weight:800;font-size:1rem">💰 Grand Total</span>
+          <span class="t-value" style="font-family:var(--font-display);font-size:1.8rem;color:var(--gold)">₹{{ booking.total_price }}</span>
+        </div>
+
+      </div>
+
+      <div style="padding:0 40px 36px">
+        <a href="{{ url_for('home') }}" class="btn btn-primary btn-full">🍿 Browse More Movies</a>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════
+       BOOKING FORM
+       ════════════════════════════ -->
+  {% else %}
+  <main class="tickets-page">
+    <div class="container">
+
+      <div class="page-header">
+        <h1>Book Your <span class="text-gold">Experience</span></h1>
+        <p class="section-subtitle">Theatre → Showtime → Seats → Food 🍿</p>
+      </div>
+
+      <!-- Movie Info Bar -->
+      <div class="movie-info-bar">
+        <div style="width:70px;height:70px;border-radius:10px;overflow:hidden;flex-shrink:0;">
+          <img src="{{ url_for('static', filename='images/' + movie.poster) }}" alt="{{ movie.title }}" style="width:100%;height:100%;object-fit:cover;">
+        </div>
+        <div>
+          <h2>{{ movie.title }}</h2>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+            <span class="badge badge-genre">{{ movie.genre }}</span>
+            <span class="badge badge-rating">{{ movie.rating }}</span>
+            <span style="font-size:0.85rem;color:var(--text-secondary)">🕐 {{ movie.duration }}</span>
+            <span style="font-size:0.85rem;color:var(--gold)">⭐ {{ movie.score }}</span>
+          </div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-family:var(--font-display);font-size:1.6rem;font-weight:900;color:var(--gold)">₹{{ movie.price }}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted)">per ticket</div>
+        </div>
+      </div>
+
+      <div class="ticket-layout">
+
+        <!-- ── LEFT COLUMN ── -->
+        <div>
+
+          <!-- STEP 1: Theatre -->
+          <div class="step-block">
+            <span class="step-label">① Select Theatre</span>
+            <div class="theatre-cards" id="theatre-cards">
+              {% for theatre in theatres %}
+              <div
+                class="theatre-card
+                  {% if theatre.brand == 'PVR' %}pvr-card
+                  {% elif theatre.brand == 'INOX' %}inox-card
+                  {% else %}cpolis-card{% endif %}
+                  {% if loop.first %}active{% endif %}"
+                data-id="{{ theatre.id }}"
+                data-name="{{ theatre.name }}"
+                data-loc="{{ theatre.location }}"
+                onclick="selectTheatre(this)"
+              >
+                <span class="t-check">✓</span>
+                <span class="brand-badge
+                  {% if theatre.brand == 'PVR' %}pvr-badge
+                  {% elif theatre.brand == 'INOX' %}inox-badge
+                  {% else %}cpolis-badge{% endif %}">
+                  {{ theatre.brand }}
+                </span>
+                <div class="t-name">{{ theatre.name }}</div>
+                <div class="t-loc">📍 {{ theatre.location }}</div>
+                <div class="t-tags">
+                  {% for f in theatre.facilities %}
+                    <span class="t-tag">{{ f }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- STEP 2: Showtime -->
+          <div class="step-block showtime-selector">
+            <span class="step-label">② Select Showtime</span>
+            <div class="showtime-grid">
+              {% for time in movie.times %}
+                <button class="showtime-btn {% if loop.first %}active{% endif %}" data-time="{{ time }}" type="button">{{ time }}</button>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- STEP 3: Seats -->
+          <div class="step-block">
+            <span class="step-label">③ Choose Seats</span>
+            <div class="screen-wrapper">
+              <div class="screen"></div>
+              <div class="screen-space"></div>
+            </div>
+
+            <form id="booking-form" method="POST" action="{{ url_for('tickets', movie_id=movie.id) }}">
+              <input type="hidden" id="showtime-input" name="showtime"   value="{{ movie.times[0] }}">
+              <input type="hidden" id="theatre-input"  name="theatre_id" value="{{ theatres[0].id }}">
+              <input type="hidden" id="movie-id-val"   value="{{ movie.id }}">
+
+              <div id="seat-grid" data-price="{{ movie.price }}">
+                {% set rows = ['A','B','C','D','E','F'] %}
+                <div class="seat-grid">
+                  {% for row in rows %}
+                    <div class="seat-row">
+                      <div class="row-label">{{ row }}</div>
+                      <div class="row-seats">
+                        {% for col in range(1,7) %}
+                          {% set sid = row ~ col %}
+                          <div class="seat {% if sid in booked_seats %}seat-taken{% endif %}" data-seat="{{ sid }}" title="Seat {{ sid }}"></div>
+                        {% endfor %}
+                        <div class="aisle"></div>
+                        {% for col in range(7,13) %}
+                          {% set sid = row ~ col %}
+                          <div class="seat {% if sid in booked_seats %}seat-taken{% endif %}" data-seat="{{ sid }}" title="Seat {{ sid }}"></div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="seat-legend">
+                <div class="legend-item"><div class="legend-swatch swatch-available"></div> Available</div>
+                <div class="legend-item"><div class="legend-swatch swatch-selected"></div> Selected</div>
+                <div class="legend-item"><div class="legend-swatch swatch-taken"></div> Taken</div>
+              </div>
+
+              <!-- STEP 4: Food Pre-booking -->
+              <div class="food-section">
+                <div class="food-toggle-bar open" id="food-toggle" onclick="toggleFoodPanel()">
+                  <span style="font-size:1.3rem">🍿</span>
+                  <div>
+                    <span class="food-toggle-title">④ Pre-book Food & Drinks</span>
+                    <span class="food-toggle-sub">Skip the counter queue!</span>
+                  </div>
+                  <span class="food-toggle-arrow">▲</span>
+                </div>
+
+                <div class="food-panel" id="food-panel">
+                  <div class="food-cat-tabs">
+                    <button type="button" class="food-tab active" onclick="filterFood('all',this)">All</button>
+                    <button type="button" class="food-tab" onclick="filterFood('Popcorn',this)">🍿 Popcorn</button>
+                    <button type="button" class="food-tab" onclick="filterFood('Drinks',this)">🥤 Drinks</button>
+                    <button type="button" class="food-tab" onclick="filterFood('Snacks',this)">🌮 Snacks</button>
+                    <button type="button" class="food-tab" onclick="filterFood('Combos',this)">🎉 Combos</button>
+                  </div>
+
+                  <div class="food-grid" id="food-grid">
+                    {% for food in food_menu %}
+                    <div class="food-item" data-cat="{{ food.category }}">
+                      <div class="food-emo">{{ food.emoji }}</div>
+                      <div class="food-info">
+                        <div class="food-nm">{{ food.name }}</div>
+                        <div class="food-sz">{{ food.size }}</div>
+                        <div class="food-pr">₹{{ food.price }}</div>
+                      </div>
+                      <div class="qty-ctrl">
+                        <button type="button" class="qty-btn" onclick="changeQty('{{ food.id }}',-1)">−</button>
+                        <div class="qty-num" id="qty_{{ food.id }}">0</div>
+                        <button type="button" class="qty-btn" onclick="changeQty('{{ food.id }}',1)">+</button>
+                      </div>
+                      <input type="hidden" name="food_qty_{{ food.id }}" id="finput_{{ food.id }}" value="0">
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div><!-- /food-panel -->
+              </div><!-- /food-section -->
+
+            </form>
+          </div><!-- /step 3 block -->
+        </div><!-- /left col -->
+
+        <!-- ── RIGHT: Booking Summary Panel ── -->
+        <div class="booking-panel">
+          <h3>🎟️ Booking Summary</h3>
+
+          <!-- Theatre summary -->
+          <div class="psec">
+            <div class="psec-label">🏛️ Theatre</div>
+            <div style="font-weight:600;font-size:0.9rem" id="sum-theatre-name">{{ theatres[0].name }}</div>
+            <div style="font-size:0.76rem;color:var(--text-muted);margin-top:2px" id="sum-theatre-loc">{{ theatres[0].location }}</div>
+          </div>
+
+          <!-- Movie + showtime -->
+          <div class="psec">
+            <div class="booking-line">
+              <span class="label">🎬 Film</span>
+              <span class="value">{{ movie.emoji }} {{ movie.title }}</span>
+            </div>
+            <div class="booking-line" style="margin-bottom:0">
+              <span class="label">🕐 Showtime</span>
+              <span class="value" id="summary-showtime">{{ movie.times[0] }}</span>
+            </div>
+          </div>
+
+          <!-- Seats -->
+          <div class="psec">
+            <div class="booking-line">
+              <span class="label">🪑 Seats</span>
+              <div class="selected-seats-display" id="seats-display">
+                <span style="color:var(--text-muted);font-size:0.85rem">None selected</span>
+              </div>
+            </div>
+            <div class="booking-line">
+              <span class="label">Tickets</span>
+              <span class="value" id="seat-count">0</span>
+            </div>
+            <div class="booking-line" style="margin-bottom:0">
+              <span class="label">Ticket Total</span>
+              <span class="value" id="ticket-total">₹0</span>
+            </div>
+          </div>
+
+          <!-- Food summary (hidden until items added) -->
+          <div class="psec" id="food-sum-section" style="display:none">
+            <div class="psec-label">🍿 Food & Drinks</div>
+            <div id="food-sum-rows"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:0.88rem;font-weight:600">
+              <span style="color:var(--text-secondary)">Food Total</span>
+              <span style="color:var(--gold)" id="food-total-lbl">₹0</span>
+            </div>
+          </div>
+
+          <!-- Grand Total -->
+          <div class="booking-total">
+            <span class="label">💰 Grand Total</span>
+            <span class="total-price" id="total-price">₹0</span>
+          </div>
+
+          <button type="submit" form="booking-form" class="btn btn-primary btn-full" style="margin-top:24px">
+            Confirm Booking →
+          </button>
+          <a href="{{ url_for('home') }}" class="btn btn-secondary btn-full" style="margin-top:10px">
+            ← Back to Movies
+          </a>
+        </div>
+
+      </div><!-- /ticket-layout -->
+    </div>
+  </main>
+
+  <script>
+    /* ────────────────────────────────────────────
+       Theatre selection
+    ──────────────────────────────────────────── */
+    var activeTheatreId = "{{ theatres[0].id }}";
+
+    function selectTheatre(card) {
+      document.querySelectorAll(".theatre-card").forEach(function(c) { c.classList.remove("active"); });
+      card.classList.add("active");
+      activeTheatreId = card.getAttribute("data-id");
+
+      document.getElementById("theatre-input").value = activeTheatreId;
+      document.getElementById("sum-theatre-name").textContent = card.getAttribute("data-name");
+      document.getElementById("sum-theatre-loc").textContent  = card.getAttribute("data-loc");
+
+      // Refresh seats for new theatre
+      var showtime = document.getElementById("showtime-input").value;
+      var movieId  = document.getElementById("movie-id-val").value;
+      fetchSeats(movieId, activeTheatreId, showtime);
+      clearSeats();
+    }
+
+    /* ────────────────────────────────────────────
+       Showtime sync
+    ──────────────────────────────────────────── */
+    document.querySelectorAll(".showtime-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var el = document.getElementById("summary-showtime");
+        if (el) el.textContent = btn.getAttribute("data-time");
+      });
+    });
+
+    /* ────────────────────────────────────────────
+       AJAX seat loader
+    ──────────────────────────────────────────── */
+    function fetchSeats(movieId, theatreId, showtime) {
+      fetch("/api/booked_seats?movie_id=" + encodeURIComponent(movieId)
+          + "&theatre_id=" + encodeURIComponent(theatreId)
+          + "&showtime="   + encodeURIComponent(showtime))
+        .then(function(r){ return r.json(); })
+        .then(function(d){ markTakenSeats(d.booked || []); })
+        .catch(function(e){ console.warn(e); });
+    }
+
+    function markTakenSeats(list) {
+      document.querySelectorAll(".seat").forEach(function(s) {
+        var id = s.getAttribute("data-seat");
+        if (list.includes(id)) { s.classList.add("seat-taken"); s.classList.remove("seat-selected"); }
+        else { s.classList.remove("seat-taken"); }
+      });
+    }
+
+    function clearSeats() {
+      document.querySelectorAll(".seat-selected").forEach(function(s){ s.classList.remove("seat-selected"); });
+      document.getElementById("seat-count").textContent = "0";
+      document.getElementById("seats-display").innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem">None selected</span>';
+      document.querySelectorAll(".dynamic-seat-input").forEach(function(e){ e.remove(); });
+      recalcTotal();
+    }
+
+    /* ────────────────────────────────────────────
+       Food panel toggle
+    ──────────────────────────────────────────── */
+    function toggleFoodPanel() {
+      var panel  = document.getElementById("food-panel");
+      var toggle = document.getElementById("food-toggle");
+      var hidden = panel.style.display === "none";
+      panel.style.display = hidden ? "" : "none";
+      toggle.classList.toggle("open", hidden);
+    }
+
+    /* ────────────────────────────────────────────
+       Food category filter
+    ──────────────────────────────────────────── */
+    function filterFood(cat, btn) {
+      document.querySelectorAll(".food-tab").forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+      document.querySelectorAll(".food-item").forEach(function(item){
+        item.style.display = (cat === "all" || item.getAttribute("data-cat") === cat) ? "flex" : "none";
+      });
+    }
+
+    /* ────────────────────────────────────────────
+       Food qty controls
+    ──────────────────────────────────────────── */
+    var foodPrices = {
+      {% for food in food_menu %}
+      "{{ food.id }}": { price: {{ food.price }}, name: "{{ food.name }}", size: "{{ food.size }}", emoji: "{{ food.emoji }}" },
+      {% endfor %}
+    };
+
+    var foodQtys = {};
+
+    function changeQty(id, delta) {
+      foodQtys[id] = Math.max(0, (foodQtys[id] || 0) + delta);
+      document.getElementById("qty_" + id).textContent  = foodQtys[id];
+      document.getElementById("finput_" + id).value     = foodQtys[id];
+      renderFoodSummary();
+      recalcTotal();
+    }
+
+    function renderFoodSummary() {
+      var rows    = document.getElementById("food-sum-rows");
+      var section = document.getElementById("food-sum-section");
+      var lbl     = document.getElementById("food-total-lbl");
+      rows.innerHTML = "";
+      var total  = 0;
+      var hasAny = false;
+
+      Object.keys(foodQtys).forEach(function(id){
+        var qty = foodQtys[id];
+        if (!qty) return;
+        hasAny = true;
+        var info = foodPrices[id];
+        var sub  = info.price * qty;
+        total += sub;
+        var div = document.createElement("div");
+        div.className = "food-sum-row";
+        div.innerHTML = '<span>' + info.emoji + ' ' + info.name + ' ×' + qty + '</span><span class="fs-val">₹' + sub + '</span>';
+        rows.appendChild(div);
+      });
+
+      lbl.textContent          = "₹" + total;
+      section.style.display    = hasAny ? "block" : "none";
+    }
+
+    /* ────────────────────────────────────────────
+       Grand total recalculator
+    ──────────────────────────────────────────── */
+    var ticketPrice = {{ movie.price }};
+
+    function recalcTotal() {
+      var seats       = parseInt(document.getElementById("seat-count").textContent) || 0;
+      var ticketTotal = seats * ticketPrice;
+      var foodTotal   = Object.keys(foodQtys).reduce(function(sum, id){ return sum + (foodQtys[id]||0) * (foodPrices[id]?foodPrices[id].price:0); }, 0);
+
+      document.getElementById("ticket-total").textContent = "₹" + ticketTotal;
+      document.getElementById("total-price").textContent  = "₹" + (ticketTotal + foodTotal);
+    }
+  </script>
+
+  {% endif %}
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-logo">🎬 Movie Magic</div>
+      <p>© 2024 Movie Magic · Your Cinema, Your Way</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/movies1.js') }}"></script>
+</body>
+</html>

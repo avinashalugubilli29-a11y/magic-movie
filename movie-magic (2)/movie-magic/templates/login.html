@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In — Movie Magic</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200;min-width:320px">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="auth-page">
+    <div class="auth-box">
+
+      <div class="auth-logo">🎬 Movie Magic</div>
+      <p class="auth-tagline">Welcome back — the show's about to start</p>
+
+      <form method="POST" action="{{ url_for('login') }}">
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input
+            class="form-control"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="jane@example.com"
+            required
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input
+            class="form-control"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Your password"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px">
+          🎬 Log In
+        </button>
+      </form>
+
+      <!-- Demo hint for testing -->
+      <div style="background:rgba(232,196,122,0.06);border:1px solid rgba(232,196,122,0.15);border-radius:10px;padding:14px;margin-top:24px;font-size:0.82rem;color:var(--text-secondary);text-align:center">
+        💡 <strong style="color:var(--gold)">New here?</strong> Sign up first — accounts are saved in memory while the server runs.
+      </div>
+
+      <p class="auth-switch">
+        Don't have an account? <a href="{{ url_for('signup') }}">Sign up free</a>
+      </p>
+
+      <div style="text-align:center;margin-top:16px">
+        <a href="{{ url_for('index') }}" style="font-size:0.82rem;color:var(--text-muted)">← Back to home</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/movies1.js') }}"></script>
+</body>
+</html>

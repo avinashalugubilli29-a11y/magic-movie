@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Now Showing — Movie Magic</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- ─── Navigation ─── -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="{{ url_for('home') }}" class="nav-logo"><span>🎬</span> Movie Magic</a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('home') }}"    class="active">Now Showing</a></li>
+        <li><a href="{{ url_for('about') }}">About</a></li>
+        <li><a href="{{ url_for('contact') }}">Contact</a></li>
+      </ul>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:0.88rem;color:var(--text-secondary)">
+          👋 <strong style="color:var(--text-primary)">{{ user }}</strong>
+        </span>
+        <a href="{{ url_for('logout') }}" class="nav-btn btn-outline-gold">Log Out</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Flash Messages ─── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container flash-container">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ─── Main Content ─── -->
+  <main class="home-page">
+    <div class="container">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>Now <span class="text-gold">Showing</span></h1>
+        <p class="section-subtitle">{{ movies|length }} films currently in theaters — pick your next adventure</p>
+      </div>
+
+      <!-- Genre Filter Buttons (handled by movies1.js) -->
+      <div class="filters">
+        <button class="filter-btn active" data-genre="All">All Films</button>
+        {% set genres = [] %}
+        {% for movie in movies %}
+          {% if movie.genre not in genres %}
+            {# This collects unique genres — Jinja trick using namespace #}
+          {% endif %}
+        {% endfor %}
+        <!-- Hard-coded genre list matching sample data -->
+        <button class="filter-btn" data-genre="Sci-Fi">🚀 Sci-Fi</button>
+        <button class="filter-btn" data-genre="Thriller">🔥 Thriller</button>
+        <button class="filter-btn" data-genre="Drama">🎭 Drama</button>
+        <button class="filter-btn" data-genre="Action">⚡ Action</button>
+        <button class="filter-btn" data-genre="Romance">💕 Romance</button>
+        <button class="filter-btn" data-genre="Horror">👁️ Horror</button>
+      </div>
+
+      <!-- Movie Cards Grid -->
+      <div class="movies-grid">
+        {% for movie in movies %}
+          <!-- Each card has data-genre for JS filtering -->
+          <div class="movie-card" data-genre="{{ movie.genre }}" style="display:flex;">
+
+            <!-- Movie Poster Image -->
+            <div class="movie-banner" style="padding:0;overflow:hidden;background: linear-gradient(135deg, {{ movie.color }}22, {{ movie.color }}44);">
+              <img src="{{ url_for('static', filename='images/' + movie.poster) }}" alt="{{ movie.title }} poster" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+
+            <div class="movie-body">
+              <!-- Badges and Score -->
+              <div class="movie-meta">
+                <span class="badge badge-genre">{{ movie.genre }}</span>
+                <span class="badge badge-rating">{{ movie.rating }}</span>
+                <div class="movie-score">⭐ {{ movie.score }}</div>
+              </div>
+
+              <!-- Title and Description -->
+              <h3 class="movie-title">{{ movie.title }}</h3>
+              <p class="movie-desc">{{ movie.description }}</p>
+
+              <!-- Price and Book Button -->
+              <div class="movie-footer">
+                <div>
+                  <div class="movie-price">₹{{ movie.price }}</div>
+                  <div class="movie-duration">🕐 {{ movie.duration }}</div>
+                </div>
+                <a href="{{ url_for('tickets', movie_id=movie.id) }}" class="btn btn-primary btn-sm">
+                  Book Tickets →
+                </a>
+              </div>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ─── Footer ─── -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-logo">🎬 Movie Magic</div>
+      <p>© 2024 Movie Magic · Your Cinema, Your Way</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/movies1.js') }}"></script>
+</body>
+</html>

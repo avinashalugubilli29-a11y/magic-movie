@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us — Movie Magic</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- ─── Navigation ─── -->
+  <nav class="navbar">
+    <div class="container">
+      <a href="{{ url_for('index') }}" class="nav-logo"><span>🎬</span> Movie Magic</a>
+      <ul class="nav-links">
+        {% if logged_in %}
+          <li><a href="{{ url_for('home') }}">Now Showing</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('about') }}"   class="active">About</a></li>
+        <li><a href="{{ url_for('contact') }}">Contact</a></li>
+      </ul>
+      <div style="display:flex;gap:10px">
+        {% if logged_in %}
+          <span style="font-size:0.88rem;color:var(--text-secondary);align-self:center">👋 {{ user }}</span>
+          <a href="{{ url_for('logout') }}" class="nav-btn btn-outline-gold">Log Out</a>
+        {% else %}
+          <a href="{{ url_for('login') }}"  class="nav-btn btn-outline-gold">Log In</a>
+          <a href="{{ url_for('signup') }}" class="nav-btn btn-gold">Sign Up</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Flash Messages ─── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container flash-container">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="about-page">
+    <div class="container">
+
+      <!-- Hero -->
+      <div class="about-hero">
+        <h1>About <span class="text-gold">Movie Magic</span></h1>
+        <p class="section-subtitle" style="max-width:560px;margin:16px auto 0">
+          We're on a mission to make every trip to the cinema effortless,
+          joyful, and completely stress-free.
+        </p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-row">
+        <div class="stat">
+          <div class="stat-number">6</div>
+          <div class="stat-label">Films Showing</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">72</div>
+          <div class="stat-label">Seats per Screen</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">5</div>
+          <div class="stat-label">Daily Showtimes</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Online Booking</div>
+        </div>
+      </div>
+
+      <!-- Feature Cards -->
+      <h2 style="text-align:center;margin-bottom:24px">Why Choose Us?</h2>
+      <div class="about-grid">
+
+        <div class="about-card">
+          <div class="about-card-icon">🍿</div>
+          <h3>Curated Selection</h3>
+          <p>We hand-pick the best new releases across every genre — from blockbusters to indie gems.</p>
+        </div>
+
+        <div class="about-card">
+          <div class="about-card-icon">🪑</div>
+          <h3>Choose Your Seat</h3>
+          <p>See the entire auditorium in real time and pick the perfect spot before you arrive.</p>
+        </div>
+
+        <div class="about-card">
+          <div class="about-card-icon">⚡</div>
+          <h3>Instant Booking</h3>
+          <p>Book in under 60 seconds. No queues, no kiosks, no stress — just great movies.</p>
+        </div>
+
+        <div class="about-card">
+          <div class="about-card-icon">🔒</div>
+          <h3>Safe & Secure</h3>
+          <p>Your personal data and booking details are protected with industry-standard encryption.</p>
+        </div>
+
+        <div class="about-card">
+          <div class="about-card-icon">📱</div>
+          <h3>Works Everywhere</h3>
+          <p>Book on your phone, tablet, or desktop — Movie Magic works beautifully on any device.</p>
+        </div>
+
+        <div class="about-card">
+          <div class="about-card-icon">🎭</div>
+          <h3>All Genres</h3>
+          <p>Action, horror, romance, sci-fi, drama — we've got something for every kind of film lover.</p>
+        </div>
+
+      </div>
+
+      <!-- CTA -->
+      <div style="text-align:center;padding:60px 0 20px">
+        <h2 style="margin-bottom:16px">Ready for the Show?</h2>
+        <p style="color:var(--text-secondary);margin-bottom:28px">
+          Join thousands of film fans who book with Movie Magic every week.
+        </p>
+        {% if logged_in %}
+          <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg">🍿 Browse Movies</a>
+        {% else %}
+          <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">🎟️ Create Free Account</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ─── Footer ─── -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-logo">🎬 Movie Magic</div>
+      <p>© 2024 Movie Magic · Your Cinema, Your Way</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/movies1.js') }}"></script>
+</body>
+</html>

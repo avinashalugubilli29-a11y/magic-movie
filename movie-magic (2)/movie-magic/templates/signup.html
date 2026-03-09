@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Movie Magic</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- ─── Flash Messages ─── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:200;min-width:320px">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="auth-page">
+    <div class="auth-box">
+
+      <!-- Logo -->
+      <div class="auth-logo">🎬 Movie Magic</div>
+      <p class="auth-tagline">Create your account and start booking</p>
+
+      <!-- Signup Form -->
+      <!-- action="" posts to the same URL; Flask handles POST in signup() -->
+      <form method="POST" action="{{ url_for('signup') }}">
+
+        <div class="form-group">
+          <label class="form-label" for="name">Full Name</label>
+          <input
+            class="form-control"
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Jane Smith"
+            required
+            autocomplete="name"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input
+            class="form-control"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="jane@example.com"
+            required
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input
+            class="form-control"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="At least 6 characters"
+            required
+            minlength="6"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm Password</label>
+          <input
+            class="form-control"
+            type="password"
+            id="confirm_password"
+            name="confirm_password"
+            placeholder="Repeat your password"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px">
+          🎟️ Create Account
+        </button>
+      </form>
+
+      <p class="auth-switch">
+        Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+      </p>
+
+      <div style="text-align:center;margin-top:16px">
+        <a href="{{ url_for('index') }}" style="font-size:0.82rem;color:var(--text-muted)">← Back to home</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/movies1.js') }}"></script>
+</body>
+</html>
